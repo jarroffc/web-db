@@ -3,19 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Whitelist Bot</title>
+    <title>Panel Whitelist</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Tambahan CSS kecil untuk hide/show section */
+        #dashboard-section { display: none; }
+        .auth-box { max-width: 400px; margin: 15vh auto; text-align: center; }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1 class="text-center">Dashboard Whitelist</h1>
+    
+    <div class="container" id="auth-section">
+        <div class="card auth-box">
+            <h1>Panel Whitelist</h1>
+            <p>Masukkan API Key untuk mengakses database.</p>
+            <form id="authForm">
+                <input type="password" id="inputApiKey" placeholder="Masukkan API Key..." required>
+                <button type="submit" id="btnAuth">Akses Panel</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="container" id="dashboard-section">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h1>Dashboard Whitelist</h1>
+            <button onclick="logout()" style="background:#ff6b6b; width: auto; padding: 10px 20px;">Keluar</button>
+        </div>
         
         <div class="flex-row">
             <div class="card w-50">
                 <h2>Tambah Nomor</h2>
                 <form id="addForm">
                     <input type="text" id="waNumber" placeholder="Contoh: 6285876485652" required>
-                    <input type="password" id="apiKey" placeholder="API Key" required>
                     <button type="submit" id="btnSubmit">Tambah ke Whitelist</button>
                 </form>
             </div>
@@ -32,23 +51,59 @@
                 <li class="list-item">Memuat data...</li>
             </ul>
         </div>
-        
-        <button onclick="logout()" style="background:#ff6b6b; max-width: 200px; margin: 0 auto; display: block;">Logout</button>
     </div>
 
     <script>
-        const token = localStorage.getItem('token');
-        if(!token) window.location.href = '/login.html';
+        // Logika Frontend
+        let currentApiKey = localStorage.getItem('API_KEY') || '';
 
-        const headers = {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        };
+        const authSection = document.getElementById('auth-section');
+        const dashboardSection = document.getElementById('dashboard-section');
 
+        // Cek API Key saat pertama buka web
+        if(currentApiKey) {
+            verifyApiKey(currentApiKey);
+        }
+
+        // Form Submit API Key
+        document.getElementById('authForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const key = document.getElementById('inputApiKey').value;
+            document.getElementById('btnAuth').innerText = "Mengecek...";
+            await verifyApiKey(key);
+            document.getElementById('btnAuth').innerText = "Akses Panel";
+        });
+
+        // Fungsi Validasi API Key ke Server
+        async function verifyApiKey(key) {
+            try {
+                const res = await fetch('/api/verify', {
+                    method: 'POST',
+                    headers: { 'x-api-key': key }
+                });
+                if(res.ok) {
+                    currentApiKey = key;
+                    localStorage.setItem('API_KEY', key);
+                    authSection.style.display = 'none';
+                    dashboardSection.style.display = 'block';
+                    fetchNumbers(); // Langsung load data
+                } else {
+                    alert("API Key Salah!");
+                    logout();
+                }
+            } catch (err) {
+                alert("Gagal koneksi ke server.");
+            }
+        }
+
+        // Fungsi Load Data Nomor
         async function fetchNumbers() {
             try {
-                const res = await fetch('/api/numbers', { headers });
-                if(res.status === 401 || res.status === 403) return logout();
+                const res = await fetch('/api/numbers', {
+                    headers: { 'x-api-key': currentApiKey }
+                });
+                
+                if(res.status === 401) return logout();
                 
                 const data = await res.json();
                 const list = document.getElementById('numberList');
@@ -66,14 +121,14 @@
                     `;
                 });
             } catch (err) {
-                alert("Gagal memuat data dari server.");
+                console.error(err);
             }
         }
 
+        // Fungsi Tambah Nomor
         document.getElementById('addForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const num = document.getElementById('waNumber').value;
-            const api = document.getElementById('apiKey').value;
             const btn = document.getElementById('btnSubmit');
 
             btn.innerText = "Menyimpan...";
@@ -81,8 +136,11 @@
 
             const res = await fetch('/api/numbers', {
                 method: 'POST',
-                headers,
-                body: JSON.stringify({ number: num, apiKey: api })
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'x-api-key': currentApiKey 
+                },
+                body: JSON.stringify({ number: num })
             });
             const data = await res.json();
             
@@ -97,10 +155,14 @@
             btn.disabled = false;
         });
 
+        // Fungsi Hapus Nomor
         async function deleteNumber(num) {
             if(!confirm(`Hapus nomor ${num} dari whitelist?`)) return;
             
-            const res = await fetch(`/api/numbers/${num}`, { method: 'DELETE', headers });
+            const res = await fetch(`/api/numbers/${num}`, { 
+                method: 'DELETE', 
+                headers: { 'x-api-key': currentApiKey } 
+            });
             const data = await res.json();
             
             if(res.ok) {
@@ -110,13 +172,14 @@
             }
         }
 
+        // Fungsi Logout / Reset API Key
         function logout() {
-            localStorage.removeItem('token');
-            window.location.href = '/login.html';
+            localStorage.removeItem('API_KEY');
+            currentApiKey = '';
+            authSection.style.display = 'block';
+            dashboardSection.style.display = 'none';
+            document.getElementById('inputApiKey').value = '';
         }
-
-        // Init
-        fetchNumbers();
     </script>
 </body>
 </html>
