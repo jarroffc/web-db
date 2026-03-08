@@ -123,12 +123,19 @@ app.use((req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Start Server
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`
-    =======================================
-    SERVER JARR ON PORT: ${PORT}
-    API KEY: ${process.env.API_KEY || 'jarrxd'}
-    =======================================
-    `);
-});
+// Hapus bagian app.listen yang lama, ganti jadi ini:
+
+// Khusus buat Vercel biar bisa baca Express-nya
+module.exports = app; 
+
+// Khusus buat VPS (biar tetep bisa jalan pake PM2/Node)
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, '0.0.0.0', () => {
+        console.log(`
+        =======================================
+        SERVER JARR ON PORT: ${PORT}
+        API KEY: ${process.env.API_KEY || 'jarrxd'}
+        =======================================
+        `);
+    });
+}
