@@ -1,0 +1,117 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@400;600;700&display=swap');
+
+/* Fallback: Jika COLUNA/NEVIS tidak ada, gunakan Fredoka & Nunito untuk kesan kartun */
+:root {
+    --bg-color: #f0f8ff;
+    --primary-blue: #4facfe;
+    --pastel-blue: #cce5ff;
+    --border-color: #1a1a1a;
+    --font-title: 'COLUNA', 'Fredoka', sans-serif;
+    --font-text: 'NEVIS', 'Nunito', sans-serif;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-text);
+    background-color: var(--bg-color);
+    background-image: radial-gradient(var(--pastel-blue) 2px, transparent 2px);
+    background-size: 30px 30px;
+    color: var(--border-color);
+}
+
+h1, h2, h3 {
+    font-family: var(--font-title);
+    letter-spacing: 1px;
+}
+
+.container {
+    max-width: 800px;
+    margin: 50px auto;
+    padding: 20px;
+}
+
+/* Card Style (Cartoonish / Neo-Brutalist) */
+.card {
+    background: #ffffff;
+    border: 3px solid var(--border-color);
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: 6px 6px 0px var(--border-color);
+    transition: transform 0.2s ease;
+}
+
+.card:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 8px 8px 0px var(--border-color);
+}
+
+/* Inputs & Buttons */
+input {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-family: var(--font-text);
+    font-size: 16px;
+    box-sizing: border-box;
+    transition: all 0.3s;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 3px 3px 0px var(--primary-blue);
+}
+
+button {
+    background-color: var(--primary-blue);
+    color: white;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-family: var(--font-title);
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 4px 4px 0px var(--border-color);
+    transition: all 0.1s;
+    width: 100%;
+}
+
+button:active {
+    transform: translate(4px, 4px);
+    box-shadow: 0px 0px 0px var(--border-color);
+}
+
+button.delete-btn {
+    background-color: #ff6b6b;
+    width: auto;
+    padding: 8px 15px;
+}
+
+/* List / Table */
+.list-group {
+    list-style: none;
+    padding: 0;
+}
+
+.list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 10px;
+    background-color: #fff;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+/* Utils */
+.flex-row { display: flex; gap: 20px; }
+.w-50 { width: 50%; }
+.text-center { text-align: center; }
+.error-msg { color: #ff6b6b; font-size: 14px; margin-top: -5px; margin-bottom: 10px; display: block; }

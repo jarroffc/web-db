@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Whitelist Bot</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center">Dashboard Whitelist</h1>
+        
+        <div class="flex-row">
+            <div class="card w-50">
+                <h2>Tambah Nomor</h2>
+                <form id="addForm">
+                    <input type="text" id="waNumber" placeholder="Contoh: 6285876485652" required>
+                    <input type="password" id="apiKey" placeholder="API Key" required>
+                    <button type="submit" id="btnSubmit">Tambah ke Whitelist</button>
+                </form>
+            </div>
+
+            <div class="card w-50 text-center" style="display:flex; flex-direction:column; justify-content:center;">
+                <h2>Total Terdaftar</h2>
+                <h1 id="totalCount" style="font-size: 4rem; color: var(--primary-blue); margin: 0;">0</h1>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Daftar Nomor Aktif</h2>
+            <ul id="numberList" class="list-group">
+                <li class="list-item">Memuat data...</li>
+            </ul>
+        </div>
+        
+        <button onclick="logout()" style="background:#ff6b6b; max-width: 200px; margin: 0 auto; display: block;">Logout</button>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        if(!token) window.location.href = '/login.html';
+
+        const headers = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        };
+
+        async function fetchNumbers() {
+            try {
+                const res = await fetch('/api/numbers', { headers });
+                if(res.status === 401 || res.status === 403) return logout();
+                
+                const data = await res.json();
+                const list = document.getElementById('numberList');
+                document.getElementById('totalCount').innerText = data.numbers.length;
+                
+                list.innerHTML = '';
+                if(data.numbers.length === 0) list.innerHTML = '<i>Belum ada nomor terdaftar</i>';
+                
+                data.numbers.forEach((num, index) => {
+                    list.innerHTML += `
+                        <li class="list-item">
+                            <span>${index + 1}. ${num}</span>
+                            <button class="delete-btn" onclick="deleteNumber('${num}')">Hapus</button>
+                        </li>
+                    `;
+                });
+            } catch (err) {
+                alert("Gagal memuat data dari server.");
+            }
+        }
+
+        document.getElementById('addForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const num = document.getElementById('waNumber').value;
+            const api = document.getElementById('apiKey').value;
+            const btn = document.getElementById('btnSubmit');
+
+            btn.innerText = "Menyimpan...";
+            btn.disabled = true;
+
+            const res = await fetch('/api/numbers', {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({ number: num, apiKey: api })
+            });
+            const data = await res.json();
+            
+            if(res.ok) {
+                alert(data.message);
+                document.getElementById('waNumber').value = '';
+                fetchNumbers();
+            } else {
+                alert(data.error);
+            }
+            btn.innerText = "Tambah ke Whitelist";
+            btn.disabled = false;
+        });
+
+        async function deleteNumber(num) {
+            if(!confirm(`Hapus nomor ${num} dari whitelist?`)) return;
+            
+            const res = await fetch(`/api/numbers/${num}`, { method: 'DELETE', headers });
+            const data = await res.json();
+            
+            if(res.ok) {
+                fetchNumbers();
+            } else {
+                alert(data.error);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = '/login.html';
+        }
+
+        // Init
+        fetchNumbers();
+    </script>
+</body>
+</html>
