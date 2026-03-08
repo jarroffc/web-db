@@ -1,7 +1,6 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const axios = require('axios');
 const path = require('path');
@@ -9,22 +8,24 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(helmet());
+// Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Rate Limiting
+// Rate Limiting - 30 Detik
 const apiLimiter = rateLimit({
-    windowMs: 60 * 1000,
+    windowMs: 30 * 1000,
     max: 10,
-    message: { error: "Terlalu banyak request, santai dikit bang 🗿" }
+    message: { error: "Terlalu banyak request, tuggu 30 detik" }
 });
 
-// Middleware Cek API Key
+// Middleware Cek API Key (Ganti 'jarrxd' kalau mau beda)
 const checkApiKey = (req, res, next) => {
     const apiKey = req.headers['x-api-key'];
-    if (!apiKey || apiKey !== process.env.API_KEY) {
+    // Pakai process.env.API_KEY atau tembak langsung 'jarrxd'
+    const validKey = process.env.API_KEY || 'jarrxd';
+    if (!apiKey || apiKey !== validKey) {
         return res.status(401).json({ error: "API Key salah atau tidak ditemukan!" });
     }
     next();
@@ -43,7 +44,8 @@ async function getGitHubData() {
         const content = Buffer.from(response.data.content, 'base64').toString('utf-8');
         return { data: JSON.parse(content), sha: response.data.sha };
     } catch (error) {
-        throw new Error("Gagal mengambil data dari GitHub");
+        console.error("GitHub Get Error:", error.response ? error.response.data : error.message);
+        throw new Error("Gagal mengambil data dari GitHub. Cek Token/Repo!");
     }
 }
 
@@ -52,13 +54,14 @@ async function updateGitHubData(newData, sha, message) {
     try {
         await axios.put(GITHUB_URL, { message, content: encodedContent, sha }, { headers: githubHeaders });
     } catch (error) {
-        throw new Error("Gagal mengupdate data ke GitHub");
+        console.error("GitHub Put Error:", error.response ? error.response.data : error.message);
+        throw new Error("Gagal mengupdate data ke GitHub.");
     }
 }
 
 // --- ROUTES ---
 
-// Endpoint Verifikasi API Key (Buat Frontend)
+// Verify API Key
 app.post('/api/verify', apiLimiter, checkApiKey, (req, res) => {
     res.json({ success: true, message: "API Key Valid!" });
 });
@@ -76,20 +79,23 @@ app.get('/api/numbers', checkApiKey, async (req, res) => {
 // Tambah Nomor Baru
 app.post('/api/numbers', apiLimiter, checkApiKey, async (req, res) => {
     const { number } = req.body;
-    const phoneRegex = /^628\d{8,}$/;
-    
-    if (!phoneRegex.test(number)) {
-        return res.status(400).json({ error: "Format salah. Wajib diawali 628, minimal 11 digit." });
+
+    // Filter Nomor (Bebas, yang penting angka & min 5 digit)
+    if (!number || number.length < 5 || isNaN(number)) {
+        return res.status(400).json({ error: "Format salah! Harus angka & minimal 5 digit." });
     }
 
     try {
         const { data, sha } = await getGitHubData();
         if (!data.nomor) data.nomor = [];
-        if (data.nomor.includes(number)) return res.status(400).json({ error: "Nomor sudah terdaftar" });
+        
+        if (data.nomor.includes(number)) {
+            return res.status(400).json({ error: "Nomor sudah ada di database!" });
+        }
 
         data.nomor.push(number);
         await updateGitHubData(data, sha, `Tambah whitelist: ${number}`);
-        res.json({ message: "Nomor berhasil ditambahkan!" });
+        res.json({ message: "Nomor berhasil ditambahkan ke GitHub!" });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -100,23 +106,29 @@ app.delete('/api/numbers/:number', checkApiKey, async (req, res) => {
     const { number } = req.params;
     try {
         const { data, sha } = await getGitHubData();
-        if (!data.nomor || !data.nomor.includes(number)) return res.status(404).json({ error: "Nomor tidak ditemukan" });
+        if (!data.nomor || !data.nomor.includes(number)) {
+            return res.status(404).json({ error: "Nomor tidak ditemukan!" });
+        }
 
         data.nomor = data.nomor.filter(n => n !== number);
         await updateGitHubData(data, sha, `Hapus whitelist: ${number}`);
-        res.json({ message: "Nomor berhasil dihapus!" });
+        res.json({ message: "Nomor berhasil dihapus dari GitHub!" });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 });
 
-// Fallback Route
+// Fallback ke Frontend
 app.use((req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Eksekusi Server (Bisa Lokal & Vercel)
-if (process.env.NODE_ENV !== 'production') {
-    app.listen(PORT, () => console.log(`Server berjalan di port ${PORT}`));
-}
-module.exports = app;
+// Start Server
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`
+    =======================================
+    SERVER JARR ON PORT: ${PORT}
+    API KEY: ${process.env.API_KEY || 'jarrxd'}
+    =======================================
+    `);
+});
