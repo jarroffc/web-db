@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 3000;
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Rate Limiting (5 request per menit)
 const apiLimiter = rateLimit({
@@ -156,4 +156,10 @@ app.use((req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-app.listen(PORT, () => console.log(`Server berjalan di port ${PORT}`));
+// Biar bisa jalan di VPS lokal DAN Vercel
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => console.log(`Server berjalan di port ${PORT}`));
+}
+
+// WAJIB ADA BUAT VERCEL
+module.exports = app;
