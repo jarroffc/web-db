@@ -3,183 +3,195 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Whitelist</title>
+    <title>Web Database — Jarr</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        /* Tambahan CSS kecil untuk hide/show section */
-        #dashboard-section { display: none; }
-        .auth-box { max-width: 400px; margin: 15vh auto; text-align: center; }
-    </style>
 </head>
 <body>
-    
-    <div class="container" id="auth-section">
-        <div class="card auth-box">
-            <h1>Panel Whitelist</h1>
-            <p>Masukkan API Key untuk mengakses database.</p>
-            <form id="authForm">
-                <input type="password" id="inputApiKey" placeholder="Masukkan API Key..." required>
-                <button type="submit" id="btnAuth">Akses Panel</button>
-            </form>
-        </div>
-    </div>
 
-    <div class="container" id="dashboard-section">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h1>Dashboard Whitelist</h1>
-            <button onclick="logout()" style="background:#ff6b6b; width: auto; padding: 10px 20px;">Keluar</button>
-        </div>
-        
-        <div class="flex-row">
-            <div class="card w-50">
-                <h2>Tambah Nomor</h2>
-                <form id="addForm">
-                    <input type="text" id="waNumber" placeholder="Contoh: 6285876485652" required>
-                    <button type="submit" id="btnSubmit">Tambah ke Whitelist</button>
-                </form>
+    <div id="toast" class="toast"></div>
+
+    <div class="container" id="landing-section">
+        <div class="card text-center">
+            <h1 style="font-size: 2.5rem;">Hii welcome! 👋</h1>
+            <p>This is a simple website created by Jarr, its main function is to monitor/control database security!</p>
+            
+            <div class="step-card">
+                <div class="step-num">1</div>
+                <div style="text-align: left;"><strong>Siapkan API Key</strong></div>
+            </div>
+            <div class="step-card">
+                <div class="step-num">2</div>
+                <div style="text-align: left;"><strong>Login & Kelola Data</strong></div>
             </div>
 
-            <div class="card w-50 text-center" style="display:flex; flex-direction:column; justify-content:center;">
-                <h2>Total Terdaftar</h2>
-                <h1 id="totalCount" style="font-size: 4rem; color: var(--primary-blue); margin: 0;">0</h1>
-            </div>
+            <button onclick="goToLogin()" style="margin-top: 20px;">start</button>
         </div>
 
         <div class="card">
-            <h2>Daftar Nomor Aktif</h2>
-            <ul id="numberList" class="list-group">
-                <li class="list-item">Memuat data...</li>
+            <h2 style="margin-top:0;">📖 Readme</h2>
+            <p>Website ini berfungsi untuk menambahkan database security, untuk meningkatkan keamanan pada script secara real-time.</p>
+            
+            <hr style="border: 1px dashed var(--border-color); margin: 20px 0;">
+            
+            <h2>💡 Informasi Menu</h2>
+            <ul style="padding-left: 20px; line-height: 1.8;">
+                <li><strong>Add:</strong> Untuk menambahkan nomor baru ke database cloud.</li>
+                <li><strong>List:</strong> Untuk melihat daftar semua nomor yang terdaftar.</li>
+                <li><strong>Del:</strong> Untuk menghapus nomor dari database keamanan.</li>
             </ul>
+        </div>
+
+        <div class="footer-links card text-center">
+            <h3>Hubungi Kami</h3>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <a href="https://t.me/jarroffc2" target="_blank" class="contact-btn">Contact Support</a>
+                <a href="https://whatsapp.com/channel/0029VbBoflt4dTnNWXV4zC09" target="_blank" class="contact-btn" style="background: #eee; color: #1a1a1a;">Channel Info</a>
+            </div>
+            <p style="margin-top: 20px; font-weight: bold;">© Copyright Jarr</p>
+        </div>
+    </div>
+
+    <div class="container hidden" id="auth-section">
+        <div class="card text-center" style="max-width: 450px; margin: auto;">
+            <h1>Verifikasi Akses</h1>
+            <form id="authForm">
+                <input type="password" id="inputApiKey" placeholder="Masukkan Key..." required>
+                <button type="submit">Masuk</button>
+            </form>
+            <button onclick="goToLanding()" style="background:none; color:#888; border:none; box-shadow:none; font-size: 14px;">← Kembali</button>
+        </div>
+    </div>
+
+    <div class="container hidden" id="dashboard-section">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h1 style="margin:0;">Jarr Security Web</h1>
+            <button onclick="logout()" style="width:auto; background:#ff6b6b; padding: 5px 15px; font-size: 14px;">LOGOUT</button>
+        </div>
+
+        <div class="menu-container">
+            <button class="menu-btn active" id="m-add" onclick="openMenu('add')">ADD</button>
+            <button class="menu-btn" id="m-list" onclick="openMenu('list')">LIST</button>
+            <button class="menu-btn" id="m-del" onclick="openMenu('del')">DEL</button>
+        </div>
+
+        <div id="section-add" class="panel-section">
+            <h2>[ + ] Add number</h2>
+            <input type="text" id="numAdd" placeholder="Masukkan nomor (Contoh: 628...)">
+            <button onclick="actionAdd()" id="btnAdd">Save number</button>
+        </div>
+
+        <div id="section-list" class="panel-section hidden">
+            <h2>[ > ] List number (<span id="count">0</span>)</h2>
+            <button onclick="fetchNumbers()" style="background: #eee; color: #1a1a1a; margin-bottom: 15px;">Refresh</button>
+            <div id="list" class="list-group"></div>
+        </div>
+
+        <div id="section-del" class="panel-section hidden">
+            <h2>[ - ] Delete number</h2>
+            <input type="text" id="numDel" placeholder="Nomor yang ingin dihapus...">
+            <button onclick="actionDel()" style="background:#ff6b6b;">Delete</button>
         </div>
     </div>
 
     <script>
-        // Logika Frontend
-        let currentApiKey = localStorage.getItem('API_KEY') || '';
+        let key = localStorage.getItem('API_KEY') || '';
+        const toast = document.getElementById('toast');
 
-        const authSection = document.getElementById('auth-section');
-        const dashboardSection = document.getElementById('dashboard-section');
-
-        // Cek API Key saat pertama buka web
-        if(currentApiKey) {
-            verifyApiKey(currentApiKey);
+        function showToast(msg, type = 'success') {
+            toast.innerText = (type === 'success' ? '✅ ' : '❌ ') + msg;
+            toast.className = `toast show toast-${type}`;
+            setTimeout(() => { toast.className = 'toast'; }, 3000);
         }
 
-        // Form Submit API Key
-        document.getElementById('authForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const key = document.getElementById('inputApiKey').value;
-            document.getElementById('btnAuth').innerText = "Mengecek...";
-            await verifyApiKey(key);
-            document.getElementById('btnAuth').innerText = "Akses Panel";
-        });
+        function goToLogin() {
+            document.getElementById('landing-section').classList.add('hidden');
+            document.getElementById('auth-section').classList.remove('hidden');
+        }
 
-        // Fungsi Validasi API Key ke Server
-        async function verifyApiKey(key) {
+        function goToLanding() {
+            document.getElementById('auth-section').classList.add('hidden');
+            document.getElementById('landing-section').classList.remove('hidden');
+        }
+
+        if(key) check(key);
+
+        function openMenu(m) {
+            ['add','list','del'].forEach(s => {
+                document.getElementById('section-'+s).classList.add('hidden');
+                document.getElementById('m-'+s).classList.remove('active');
+            });
+            document.getElementById('section-'+m).classList.remove('hidden');
+            document.getElementById('m-'+m).classList.add('active');
+            if(m === 'list') fetchNumbers();
+        }
+
+        document.getElementById('authForm').onsubmit = (e) => {
+            e.preventDefault();
+            check(document.getElementById('inputApiKey').value);
+        };
+
+        async function check(k) {
             try {
-                const res = await fetch('/api/verify', {
-                    method: 'POST',
-                    headers: { 'x-api-key': key }
+                const res = await fetch('/api/verify', { method:'POST', headers:{'x-api-key':k} });
+                if(res.ok) {
+                    key = k; localStorage.setItem('API_KEY', k);
+                    document.getElementById('landing-section').classList.add('hidden');
+                    document.getElementById('auth-section').classList.add('hidden');
+                    document.getElementById('dashboard-section').classList.remove('hidden');
+                    showToast("Login Berhasil!");
+                } else {
+                    showToast("API Key Salah!", "error");
+                }
+            } catch(e) { showToast("Server Offline", "error"); }
+        }
+
+        async function fetchNumbers() {
+            const res = await fetch('/api/numbers', { headers:{'x-api-key':key} });
+            const data = await res.json();
+            const list = document.getElementById('list');
+            list.innerHTML = '';
+            if(data.numbers) {
+                document.getElementById('count').innerText = data.numbers.length;
+                data.numbers.forEach(n => {
+                    list.innerHTML += `<div class="list-item"><span>${n}</span><span style="color:#2ecc71;">● Active</span></div>`;
+                });
+            }
+        }
+
+        async function actionAdd() {
+            const n = document.getElementById('numAdd').value;
+            const btn = document.getElementById('btnAdd');
+            btn.innerText = "PROCESSING..."; btn.disabled = true;
+            try {
+                const res = await fetch('/api/numbers', { 
+                    method:'POST', headers:{'Content-Type':'application/json','x-api-key':key},
+                    body: JSON.stringify({number:n})
                 });
                 if(res.ok) {
-                    currentApiKey = key;
-                    localStorage.setItem('API_KEY', key);
-                    authSection.style.display = 'none';
-                    dashboardSection.style.display = 'block';
-                    fetchNumbers(); // Langsung load data
+                    showToast("Nomor Telah Ditambahkan");
+                    document.getElementById('numAdd').value = '';
                 } else {
-                    alert("API Key Salah!");
-                    logout();
+                    const d = await res.json(); showToast(d.error, "error");
                 }
-            } catch (err) {
-                alert("Gagal koneksi ke server.");
-            }
+            } catch(e) { showToast("Error", "error"); }
+            btn.innerText = "SIMPAN NOMOR ✅"; btn.disabled = false;
         }
 
-        // Fungsi Load Data Nomor
-        async function fetchNumbers() {
+        async function actionDel() {
+            const n = document.getElementById('numDel').value;
+            if(!n) return showToast("Isi nomor dulu!", "error");
             try {
-                const res = await fetch('/api/numbers', {
-                    headers: { 'x-api-key': currentApiKey }
-                });
-                
-                if(res.status === 401) return logout();
-                
-                const data = await res.json();
-                const list = document.getElementById('numberList');
-                document.getElementById('totalCount').innerText = data.numbers.length;
-                
-                list.innerHTML = '';
-                if(data.numbers.length === 0) list.innerHTML = '<i>Belum ada nomor terdaftar</i>';
-                
-                data.numbers.forEach((num, index) => {
-                    list.innerHTML += `
-                        <li class="list-item">
-                            <span>${index + 1}. ${num}</span>
-                            <button class="delete-btn" onclick="deleteNumber('${num}')">Hapus</button>
-                        </li>
-                    `;
-                });
-            } catch (err) {
-                console.error(err);
-            }
+                const res = await fetch(`/api/numbers/${n}`, { method:'DELETE', headers:{'x-api-key':key} });
+                if(res.ok) {
+                    showToast("Nomor Berhasil Dihapus");
+                    document.getElementById('numDel').value = '';
+                } else {
+                    showToast("Nomor tidak ditemukan", "error");
+                }
+            } catch(e) { showToast("Error", "error"); }
         }
 
-        // Fungsi Tambah Nomor
-        document.getElementById('addForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const num = document.getElementById('waNumber').value;
-            const btn = document.getElementById('btnSubmit');
-
-            btn.innerText = "Menyimpan...";
-            btn.disabled = true;
-
-            const res = await fetch('/api/numbers', {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'x-api-key': currentApiKey 
-                },
-                body: JSON.stringify({ number: num })
-            });
-            const data = await res.json();
-            
-            if(res.ok) {
-                alert(data.message);
-                document.getElementById('waNumber').value = '';
-                fetchNumbers();
-            } else {
-                alert(data.error);
-            }
-            btn.innerText = "Tambah ke Whitelist";
-            btn.disabled = false;
-        });
-
-        // Fungsi Hapus Nomor
-        async function deleteNumber(num) {
-            if(!confirm(`Hapus nomor ${num} dari whitelist?`)) return;
-            
-            const res = await fetch(`/api/numbers/${num}`, { 
-                method: 'DELETE', 
-                headers: { 'x-api-key': currentApiKey } 
-            });
-            const data = await res.json();
-            
-            if(res.ok) {
-                fetchNumbers();
-            } else {
-                alert(data.error);
-            }
-        }
-
-        // Fungsi Logout / Reset API Key
-        function logout() {
-            localStorage.removeItem('API_KEY');
-            currentApiKey = '';
-            authSection.style.display = 'block';
-            dashboardSection.style.display = 'none';
-            document.getElementById('inputApiKey').value = '';
-        }
+        function logout() { localStorage.removeItem('API_KEY'); location.reload(); }
     </script>
 </body>
 </html>
